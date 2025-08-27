@@ -65,7 +65,7 @@ app.use(async (ctx) => {
   }
 });
 
-// Start the server and ensure database table exists.
+// Start the server and ensure database table exists
 app.listen(PORT, async () => {
   console.log(`Ping-pong app listening on port ${PORT}`);
   try {
