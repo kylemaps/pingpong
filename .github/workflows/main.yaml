@@ -19,21 +19,29 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      # Builds and pushes an image named 'kylmps/pingpong' to align with manifests
       - name: Build and Push Docker Image
         run: |
-          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/pingpong-app:${{ github.sha }} .
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/pingpong-app:${{ github.sha }}
+          docker build -t kylmps/pingpong:${{ github.sha }} .
+          docker push kylmps/pingpong:${{ github.sha }}
 
       - name: Checkout Configuration Repo
         uses: actions/checkout@v4
         with:
-          repository: kylemaps/log-pong-config # Replace with your config repo name
+          repository: kylemaps/log-pong-config
           path: log-pong-config
           token: ${{ secrets.GH_PAT_90_D }} # Use the PAT here
 
+      - name: Setup Kustomize
+        run: |
+          curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"  | bash
+          sudo mv kustomize /usr/local/bin/
+
+      # Uses kustomize to safely update the image tag in the config repo
       - name: Update Image Tag
         run: |
-          sed -i 's|image: .*|image: ${{ secrets.DOCKERHUB_USERNAME }}/pingpong-app:${{ github.sha }}|g' log-pong-config/manifests/deployment.yaml
+          cd log-pong-config
+          kustomize edit set image kylmps/pingpong=kylmps/pingpong:${{ github.sha }}
 
       - name: Commit and Push Changes
         run: |
